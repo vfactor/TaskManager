@@ -25,30 +25,39 @@ namespace TaskManager.Controllers
             _userManager = userManager;
         }
 
-    // GET: ToDoes
-    public IActionResult Index()
-    {
-      var toDoes = _context.ToDo.Where(td => td.User.Id == _userManager.GetUserId(this.User));
-      return View(toDoes);
-    }
-
-    // GET: ToDoes/Details/5
-    public async Task<IActionResult> Details(int? id)
+        // GET: ToDoes
+        public IActionResult Index()
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+          var model = new List<ToDo>();
+          var userId = _userManager.GetUserId(this.User);
 
-            var toDo = await _context.ToDo
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (toDo == null)
-            {
-                return NotFound();
-            }
+          model.AddRange(_context.ToDo.Where(td => td.User.Id == userId));
 
-            return View(toDo);
+          if (User.IsInRole("Manager"))
+          {
+            model.AddRange(ManageToDoes(userId));        
+          }
+
+          return View(model);
         }
+
+        // GET: ToDoes/Details/5
+        public async Task<IActionResult> Details(int? id)
+            {
+                if (id == null)
+                {
+                    return NotFound();
+                }
+
+                var toDo = await _context.ToDo
+                    .FirstOrDefaultAsync(m => m.Id == id);
+                if (toDo == null)
+                {
+                    return NotFound();
+                }
+
+                return View(toDo);
+            }
 
         // GET: ToDoes/Create
         public IActionResult Create()
@@ -157,6 +166,19 @@ namespace TaskManager.Controllers
         private bool ToDoExists(int id)
         {
             return _context.ToDo.Any(e => e.Id == id);
+        }
+
+        private IEnumerable<ToDo> ManageToDoes(string managerId)
+        {          
+          var userIds = _context.UserManager.Where(um => um.Manager.Id == managerId).Select(um => um.User.Id);
+          var ret = new List<ToDo>();
+
+          foreach(var uid in userIds)
+          {
+            ret.AddRange(_context.ToDo.Where(td => td.User.Id == uid));
+          }
+
+          return ret;
         }
     }
 }

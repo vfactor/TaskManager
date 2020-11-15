@@ -14,6 +14,8 @@ namespace TaskManager.Data
     {
 
     }
+
     public DbSet<ToDo> ToDo { get; set; }
+    public DbSet<UserManager> UserManager { get; set; }
   }
 }

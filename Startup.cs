@@ -1,18 +1,11 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using TaskManager.Data;
-using TaskManager.Models;
 
 namespace TaskManager
 {
@@ -33,10 +26,24 @@ namespace TaskManager
               Configuration.GetConnectionString("DefaultConnection")));
 
       services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+          .AddRoles<IdentityRole>()
           .AddEntityFrameworkStores<ApplicationDbContext>();          
       
       services.AddControllersWithViews();
       services.AddRazorPages();
+
+      services.AddAuthorization(options =>
+      {
+        options.AddPolicy("RequireAdministratorRole",
+             policy => policy.RequireRole("Administrator"));
+      });
+
+      services.ConfigureApplicationCookie(options =>
+      {
+        options.LoginPath = $"/account/login";
+        options.LogoutPath = $"/account/logout";
+        options.AccessDeniedPath = $"/account/accessDenied";
+      });
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
